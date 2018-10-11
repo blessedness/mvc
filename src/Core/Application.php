@@ -7,9 +7,15 @@ namespace Core;
 
 use App\Middleware\NotFoundHandlerMiddleware;
 use Core\Exception\HttpExceptionInterface;
-use Core\Http\{JsonResponse, Pipeline\MiddlewareResolver, Pipeline\Pipeline, RequestFactory, RequestInterface, ResponseInterface};
-use Core\Router\{Exception\MethodNotAllowed, Exception\NotFoundException, RouteCollection, Router};
-use Infrastructure\Common\Exception\FormException;
+use Core\Http\{JsonResponse,
+    Middleware\RouteDispatchMiddleware,
+    Middleware\RouteMiddleware,
+    Pipeline\MiddlewareResolver,
+    Pipeline\Pipeline,
+    RequestFactory,
+    RequestInterface,
+    ResponseInterface};
+use Core\Router\{RouteCollection, Router};
 
 class Application
 {
@@ -39,7 +45,12 @@ class Application
     {
         try {
             $request = RequestFactory::init();
-            $response = $this->handleRequest($request);
+
+            $router = new Router($this->routes);
+            $this->pipe(new RouteMiddleware($router, $this->resolver));
+            $this->pipe(new RouteDispatchMiddleware($this->resolver));
+
+            $response = ($this->pipeline)($request, new NotFoundHandlerMiddleware());
 
             if (!$response instanceof ResponseInterface) {
                 throw new \RuntimeException(sprintf('Response class must implements "%s" interface', ResponseInterface::class));
@@ -49,27 +60,6 @@ class Application
         } catch (\Exception $e) {
             $this->resolveExceptionException($request, $e);
         }
-    }
-
-    /**
-     * @param RequestInterface $request
-     * @return mixed
-     * @throws NotFoundException
-     * @throws MethodNotAllowed
-     */
-    public function handleRequest(RequestInterface $request)
-    {
-        $router = new Router($this->routes);
-
-        $result = $router->match($request);
-
-        foreach ($result->getAttributes() as $attribute => $value) {
-            $request = $request->withAttribute($attribute, $value);
-        }
-
-        $this->pipe($this->resolveHandler($result->getHandler(), $request));
-
-        return ($this->pipeline)($request, new NotFoundHandlerMiddleware());
     }
 
     /**
@@ -85,47 +75,30 @@ class Application
         return $this;
     }
 
-    protected function resolveHandler($handler)
-    {
-        if (is_array($handler)) {
-            return $handler;
-        }
-
-        $exploded = explode('@', $handler);
-
-        if (count($exploded) === 1) {
-            return $handler;
-        } else {
-            return function (RequestInterface $request) use ($exploded) {
-                return call_user_func([new $exploded[0], $exploded[1]], $request);
-            };
-        }
-    }
-
     /**
      * @param RequestInterface $request
      * @param \Exception|HttpExceptionInterface $exception
      */
     public function resolveExceptionException(RequestInterface $request, \Exception $exception)
     {
-        if ($exception instanceof HttpExceptionInterface) {
+        if (method_exists($exception, 'getStatusCode')) {
             $statusCode = $exception->getStatusCode();
         } else {
             $statusCode = 500;
         }
 
-        if ($exception instanceof FormException) {
-            $message = $exception->getMessages();
+        if (method_exists($exception, 'getMessages')) {
+            $error['message'] = $exception->getMessages();
         } else {
-            $message = $exception->getMessage();
+            $error['message'] = $exception->getMessage();
         }
 
-        $response = new JsonResponse([
-            'error' => $message,
-        ], $statusCode);
+        $response = new JsonResponse(compact('error'), $statusCode);
 
-        foreach ($exception->getHeaders() as $header => $value) {
-            $response = $response->withHeader($header, $value);
+        if (method_exists($exception, 'getHeaders')) {
+            foreach ($exception->getHeaders() as $header => $value) {
+                $response = $response->withHeader($header, $value);
+            }
         }
 
         $response->send();

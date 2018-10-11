@@ -10,19 +10,16 @@ class RouteCollection
 {
     private $routes = [];
 
-    public function any(string $name, string $pattern, $handler, array $tokens = []): void
+    /**
+     * @param string $name
+     * @param string $pattern
+     * @param $handler
+     * @param array $methods
+     * @param array $tokens
+     */
+    public function add(string $name, string $pattern, $handler, array $methods = [], array $tokens = []): void
     {
-        $this->routes[] = new Route($name, $pattern, $handler, [], $tokens);
-    }
-
-    public function get(string $name, string $pattern, $handler, array $tokens = []): void
-    {
-        $this->routes[] = new Route($name, $pattern, $handler, ['GET'], $tokens);
-    }
-
-    public function post(string $name, string $pattern, $handler, array $tokens = []): void
-    {
-        $this->routes[] = new Route($name, $pattern, $handler, ['POST'], $tokens);
+        $this->routes[] = new Route($name, $pattern, $handler, (array)$methods, $tokens);
     }
 
     /**
