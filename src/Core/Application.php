@@ -28,42 +28,26 @@ class Application
     public function __construct(Container $container)
     {
         $this->container = $container;
+        $this->init();
     }
 
-    /**
-     * Application run
-     */
-    public function run()
+    public function init()
     {
-        try {
-            $request = RequestFactory::init();
+        $this->container->set(NotFoundHandlerMiddleware::class, function () {
+            return new NotFoundHandlerMiddleware();
+        });
 
-            $this->container->set(NotFoundHandlerMiddleware::class, function () {
-                return new NotFoundHandlerMiddleware();
-            });
+        $this->container->set(RouteMiddleware::class, function () {
+            $router = new Router($this->container->get('router'));
+            return new RouteMiddleware($router, $this->getResolver());
+        });
 
-            $this->container->set(RouteMiddleware::class, function () {
-                $router = new Router($this->container->get('router'));
-                return new RouteMiddleware($router, $this->getResolver());
-            });
-            
-            $this->container->set(RouteDispatchMiddleware::class, function () {
-                return new RouteDispatchMiddleware($this->getResolver());
-            });
+        $this->container->set(RouteDispatchMiddleware::class, function () {
+            return new RouteDispatchMiddleware($this->getResolver());
+        });
 
-            $this->pipe($this->container->get(RouteMiddleware::class));
-            $this->pipe($this->container->get(RouteDispatchMiddleware::class));
-
-            $response = ($this->getPipeline())($request, $this->container->get(NotFoundHandlerMiddleware::class));
-
-            if (!$response instanceof ResponseInterface) {
-                throw new \RuntimeException(sprintf('Response class must implements "%s" interface', ResponseInterface::class));
-            }
-
-            $response->send();
-        } catch (\Exception $e) {
-            $this->resolveExceptionException($request, $e);
-        }
+        $this->pipe($this->container->get(RouteMiddleware::class));
+        $this->pipe($this->container->get(RouteDispatchMiddleware::class));
     }
 
     public function getResolver(): MiddlewareResolver
@@ -89,6 +73,26 @@ class Application
     public function getPipeline(): Pipeline
     {
         return $this->container->get(Pipeline::class);
+    }
+
+    /**
+     * Application run
+     */
+    public function run()
+    {
+        try {
+            $request = RequestFactory::init();
+
+            $response = ($this->getPipeline())($request, $this->container->get(NotFoundHandlerMiddleware::class));
+
+            if (!$response instanceof ResponseInterface) {
+                throw new \RuntimeException(sprintf('Response class must implements "%s" interface', ResponseInterface::class));
+            }
+
+            $response->send();
+        } catch (\Exception $e) {
+            $this->resolveExceptionException($request, $e);
+        }
     }
 
     /**
