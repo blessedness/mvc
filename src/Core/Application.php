@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace Core;
 
 use App\Middleware\NotFoundHandlerMiddleware;
+use Core\Container\Container;
 use Core\Exception\HttpExceptionInterface;
 use Core\Http\{JsonResponse,
     Middleware\RouteDispatchMiddleware,
@@ -31,11 +32,16 @@ class Application
      * @var Pipeline
      */
     private $pipeline;
+    /**
+     * @var Container
+     */
+    private $container;
 
-    public function __construct()
+    public function __construct(Container $container)
     {
         $this->resolver = new MiddlewareResolver();
         $this->pipeline = new Pipeline();
+        $this->container = $container;
     }
 
     /**
@@ -46,11 +52,15 @@ class Application
         try {
             $request = RequestFactory::init();
 
+            $this->container->set(NotFoundHandlerMiddleware::class, function () {
+                return new NotFoundHandlerMiddleware();
+            });
+
             $router = new Router($this->routes);
             $this->pipe(new RouteMiddleware($router, $this->resolver));
             $this->pipe(new RouteDispatchMiddleware($this->resolver));
 
-            $response = ($this->pipeline)($request, new NotFoundHandlerMiddleware());
+            $response = ($this->pipeline)($request, $this->container->get(NotFoundHandlerMiddleware::class));
 
             if (!$response instanceof ResponseInterface) {
                 throw new \RuntimeException(sprintf('Response class must implements "%s" interface', ResponseInterface::class));
