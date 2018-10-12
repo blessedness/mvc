@@ -16,6 +16,13 @@ $container->set(JwtAuthMiddleware::class, function () {
     return new JwtAuthMiddleware();
 });
 
+$container->set(\Core\Http\Pipeline\Pipeline::class, function () {
+    return new \Core\Http\Pipeline\Pipeline();
+});
+$container->set(\Core\Http\Pipeline\MiddlewareResolver::class, function () {
+    return new \Core\Http\Pipeline\MiddlewareResolver();
+});
+
 $container->set('router', function () use ($container) {
     $routes = new RouteCollection();
     $routes->add('home', '/', UserIndexController::class, ['GET']);

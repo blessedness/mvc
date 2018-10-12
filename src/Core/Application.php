@@ -21,22 +21,12 @@ use Core\Router\{Router};
 class Application
 {
     /**
-     * @var MiddlewareResolver
-     */
-    private $resolver;
-    /**
-     * @var Pipeline
-     */
-    private $pipeline;
-    /**
      * @var Container
      */
     private $container;
 
     public function __construct(Container $container)
     {
-        $this->resolver = new MiddlewareResolver();
-        $this->pipeline = new Pipeline();
         $this->container = $container;
     }
 
@@ -52,11 +42,19 @@ class Application
                 return new NotFoundHandlerMiddleware();
             });
 
-            $router = new Router($this->container->get('router'));
-            $this->pipe(new RouteMiddleware($router, $this->resolver));
-            $this->pipe(new RouteDispatchMiddleware($this->resolver));
+            $this->container->set(RouteMiddleware::class, function () {
+                $router = new Router($this->container->get('router'));
+                return new RouteMiddleware($router, $this->getResolver());
+            });
+            
+            $this->container->set(RouteDispatchMiddleware::class, function () {
+                return new RouteDispatchMiddleware($this->getResolver());
+            });
 
-            $response = ($this->pipeline)($request, $this->container->get(NotFoundHandlerMiddleware::class));
+            $this->pipe($this->container->get(RouteMiddleware::class));
+            $this->pipe($this->container->get(RouteDispatchMiddleware::class));
+
+            $response = ($this->getPipeline())($request, $this->container->get(NotFoundHandlerMiddleware::class));
 
             if (!$response instanceof ResponseInterface) {
                 throw new \RuntimeException(sprintf('Response class must implements "%s" interface', ResponseInterface::class));
@@ -68,6 +66,11 @@ class Application
         }
     }
 
+    public function getResolver(): MiddlewareResolver
+    {
+        return $this->container->get(MiddlewareResolver::class);
+    }
+
     /**
      * Add middleware to pipeline
      *
@@ -76,9 +79,16 @@ class Application
      */
     public function pipe($middleware): Application
     {
-        $this->pipeline->pipe($this->resolver->resolve($middleware));
+        $this->getPipeline()->pipe(
+            $this->getResolver()->resolve($middleware)
+        );
 
         return $this;
+    }
+
+    public function getPipeline(): Pipeline
+    {
+        return $this->container->get(Pipeline::class);
     }
 
     /**
