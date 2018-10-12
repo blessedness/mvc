@@ -31,7 +31,6 @@ $container->set('router', function () use ($container) {
 
 (new Application($container))
     ->pipe(\App\Middleware\ProfilerMiddleware::class)
-    ->setRoutes($container->get('router'))
     ->run();
 
 function dump($data)

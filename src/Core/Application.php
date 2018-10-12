@@ -16,14 +16,10 @@ use Core\Http\{JsonResponse,
     RequestFactory,
     RequestInterface,
     ResponseInterface};
-use Core\Router\{RouteCollection, Router};
+use Core\Router\{Router};
 
 class Application
 {
-    /**
-     * @var RouteCollection
-     */
-    private $routes;
     /**
      * @var MiddlewareResolver
      */
@@ -56,7 +52,7 @@ class Application
                 return new NotFoundHandlerMiddleware();
             });
 
-            $router = new Router($this->routes);
+            $router = new Router($this->container->get('router'));
             $this->pipe(new RouteMiddleware($router, $this->resolver));
             $this->pipe(new RouteDispatchMiddleware($this->resolver));
 
@@ -112,16 +108,5 @@ class Application
         }
 
         $response->send();
-    }
-
-    /**
-     * @param RouteCollection $routes
-     * @return Application
-     */
-    public function setRoutes(RouteCollection $routes): Application
-    {
-        $this->routes = $routes;
-
-        return $this;
     }
 }
