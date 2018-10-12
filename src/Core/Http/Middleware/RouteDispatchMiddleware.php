@@ -41,7 +41,7 @@ class RouteDispatchMiddleware implements MiddlewareInterface
 
     protected function resolveHandler($handler, RequestInterface $request)
     {
-        if (is_array($handler)) {
+        if (is_array($handler) || is_object($handler)) {
             return $handler;
         }
 

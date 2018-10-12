@@ -13,11 +13,11 @@ class RouteCollection
     /**
      * @param string $name
      * @param string $pattern
-     * @param $handler
-     * @param array $methods
+     * @param string|array|\Closure|object $handler
+     * @param array|string $methods
      * @param array $tokens
      */
-    public function add(string $name, string $pattern, $handler, array $methods = [], array $tokens = []): void
+    public function add(string $name, string $pattern, $handler, $methods, array $tokens = []): void
     {
         $this->routes[] = new Route($name, $pattern, $handler, (array)$methods, $tokens);
     }
