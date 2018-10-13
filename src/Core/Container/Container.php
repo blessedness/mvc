@@ -8,7 +8,7 @@ namespace Core\Container;
 
 use Core\Container\Exception\ServiceContainerInvalidArgumentException;
 
-class Container implements \ArrayAccess
+class Container implements \ArrayAccess, ContainerInterface
 {
     private $definitions = [];
 
@@ -53,6 +53,10 @@ class Container implements \ArrayAccess
     public function get(string $id)
     {
         if (!$this->has($id)) {
+            if (class_exists($id)) {
+                return $this->results[$id] = new $id();
+            }
+
             throw new ServiceContainerInvalidArgumentException(sprintf('Invalid service "%s"', $id));
         }
 

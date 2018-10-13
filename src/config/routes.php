@@ -13,7 +13,7 @@ $container->set('router', function () use ($container) {
     $routes->add('view', '/view/{id}', 'App\Controllers\User\UserViewController@view', ['GET'], ['id' => '\S+']);
     $routes->post('login', '/login', AuthLoginController::class);
     $routes->get('secured-home', '/secured/home', [
-        $container->get(JwtAuthMiddleware::class),
+        JwtAuthMiddleware::class,
         UserIndexController::class
     ]);
 

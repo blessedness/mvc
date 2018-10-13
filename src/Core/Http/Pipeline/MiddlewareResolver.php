@@ -6,12 +6,19 @@ declare(strict_types=1);
 namespace Core\Http\Pipeline;
 
 
+use Core\Container\ContainerInterface;
 use Core\Http\RequestInterface;
 
 class MiddlewareResolver
 {
-    public function __construct()
+    /**
+     * @var ContainerInterface
+     */
+    private $container;
+
+    public function __construct(ContainerInterface $container)
     {
+        $this->container = $container;
     }
 
     public function resolve($handler): callable
@@ -34,7 +41,7 @@ class MiddlewareResolver
         if (is_string($handler)) {
             return function (RequestInterface $request, callable $next) use ($handler) {
 
-                $middleware = $this->resolve(new $handler());
+                $middleware = $this->resolve($this->container->get($handler));
 
                 return $middleware($request, $next);
             };

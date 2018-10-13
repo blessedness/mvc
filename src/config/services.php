@@ -14,6 +14,6 @@ $container->set(JwtAuthMiddleware::class, function () {
 $container->set(Pipeline::class, function () {
     return new Pipeline();
 });
-$container->set(MiddlewareResolver::class, function () {
-    return new MiddlewareResolver();
+$container->set(MiddlewareResolver::class, function () use ($container) {
+    return new MiddlewareResolver($container);
 });
