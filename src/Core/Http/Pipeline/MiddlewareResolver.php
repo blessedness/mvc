@@ -10,6 +10,10 @@ use Core\Http\RequestInterface;
 
 class MiddlewareResolver
 {
+    public function __construct()
+    {
+    }
+
     public function resolve($handler): callable
     {
         if (is_array($handler)) {

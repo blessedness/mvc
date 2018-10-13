@@ -28,10 +28,10 @@ class Container implements \ArrayAccess
      */
     public function offsetExists($offset)
     {
-        return $this->issetDefinition($offset);
+        return $this->has($offset);
     }
 
-    public function issetDefinition(string $id): bool
+    public function has(string $id): bool
     {
         return array_key_exists($id, $this->definitions);
     }
@@ -52,7 +52,7 @@ class Container implements \ArrayAccess
 
     public function get(string $id)
     {
-        if (!$this->issetDefinition($id)) {
+        if (!$this->has($id)) {
             throw new ServiceContainerInvalidArgumentException(sprintf('Invalid service "%s"', $id));
         }
 
@@ -124,7 +124,7 @@ class Container implements \ArrayAccess
 
     public function removeDefinition($id)
     {
-        if ($this->issetDefinition($id)) {
+        if ($this->has($id)) {
             unset($this->definitions[$id]);
         }
     }
