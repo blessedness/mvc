@@ -9,13 +9,13 @@ use Core\Router\{RouteCollection};
 
 $container->set('router', function () use ($container) {
     $routes = new RouteCollection();
-    $routes->add('home', '/', UserIndexController::class, ['GET']);
+    $routes->get('home', '/', UserIndexController::class);
     $routes->add('view', '/view/{id}', 'App\Controllers\User\UserViewController@view', ['GET'], ['id' => '\S+']);
-    $routes->add('login', '/login', AuthLoginController::class, ['POST']);
-    $routes->add('secured-home', '/secured/home', [
+    $routes->post('login', '/login', AuthLoginController::class);
+    $routes->get('secured-home', '/secured/home', [
         $container->get(JwtAuthMiddleware::class),
         UserIndexController::class
-    ], ['GET']);
+    ]);
 
     return $routes;
 });
