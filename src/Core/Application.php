@@ -46,8 +46,8 @@ class Application
             return new RouteDispatchMiddleware($this->getResolver());
         });
 
-        $this->pipe($this->container->get(RouteMiddleware::class));
-        $this->pipe($this->container->get(RouteDispatchMiddleware::class));
+        $this->pipe(RouteMiddleware::class);
+        $this->pipe(RouteDispatchMiddleware::class);
     }
 
     public function getResolver(): MiddlewareResolver
