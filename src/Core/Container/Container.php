@@ -53,8 +53,32 @@ class Container implements \ArrayAccess, ContainerInterface
     public function get(string $id)
     {
         if (!$this->has($id)) {
+
             if (class_exists($id)) {
-                return $this->results[$id] = new $id();
+
+                $reflection = new \ReflectionClass($id);
+
+                $arguments = [];
+
+                if (($constructor = $reflection->getConstructor()) !== null) {
+                    foreach ($constructor->getParameters() as $parameter) {
+                        if ($class = $parameter->getClass()) {
+                            $arguments[] = $this->get($class->getName());
+                        } elseif ($parameter->isArray()) {
+                            $arguments[] = [];
+                        } else {
+                            if (!$parameter->isDefaultValueAvailable()) {
+                                throw new ServiceContainerInvalidArgumentException(
+                                    sprintf('Unable to resolve "%s" in service "%s"', $parameter->getName(), $id)
+                                );
+                            }
+
+                            $arguments[] = $parameter->getDefaultValue();
+                        }
+                    }
+                }
+
+                return $this->results[$id] = $this->definitions[$id] = $reflection->newInstanceArgs($arguments);
             }
 
             throw new ServiceContainerInvalidArgumentException(sprintf('Invalid service "%s"', $id));

@@ -33,10 +33,6 @@ class Application
 
     public function init()
     {
-        $this->container->set(NotFoundHandlerMiddleware::class, function () {
-            return new NotFoundHandlerMiddleware();
-        });
-
         $this->container->set(RouteMiddleware::class, function () {
             $router = new Router($this->container->get('router'));
             return new RouteMiddleware($router, $this->getResolver());

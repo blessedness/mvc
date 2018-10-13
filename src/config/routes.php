@@ -4,7 +4,7 @@ declare(strict_types=1);
 use App\Controllers\Auth\AuthLoginController;
 use App\Controllers\User\UserIndexController;
 use App\Middleware\JwtAuthMiddleware;
-use Core\Router\{RouteCollection};
+use Core\Router\RouteCollection;
 
 
 $container->set('router', function () use ($container) {
