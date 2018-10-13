@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace Core;
 
 use App\Middleware\NotFoundHandlerMiddleware;
+use Core\Container\Container;
 use Core\Container\ContainerInterface;
 use Core\Exception\HttpExceptionInterface;
 use Core\Http\{JsonResponse,
@@ -25,9 +26,9 @@ class Application
      */
     private $container;
 
-    public function __construct(ContainerInterface $container)
+    public function __construct(array $config)
     {
-        $this->container = $container;
+        $this->container = new Container($config);
         $this->init();
     }
 

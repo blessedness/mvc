@@ -14,6 +14,11 @@ class Container implements \ArrayAccess, ContainerInterface
 
     private $results = [];
 
+    public function __construct(array $definitions = [])
+    {
+        $this->definitions = $definitions;
+    }
+
     /**
      * Whether a offset exists
      * @link https://php.net/manual/en/arrayaccess.offsetexists.php
